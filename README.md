@@ -1,13 +1,12 @@
 # Student Planner Dashboard
 
-A clean, aesthetic, and productive student planner for both desktop (Electron) and web.
+A clean, aesthetic, and productive student planner for both desktop and web made in electron.
 
 ## ✨ Features
 - **Daily Habits:** Track your wins.
 - **Schedule:** Stay on top of your courses and exams.
-- **Tasks & Notes:** Quick organization at your fingertips.
-- **Dark Mode:** Automatically follows your system theme.
-- **Cloud Sync:** Sign in with Google on the web version to sync your data across all devices.
+- **Tasks & Notes:** Quick organization.
+- **Cloud Sync:** Sign in with Google on the web version to sync your data across all devices **(Does NOT work yet on the pc build)**.
 
 ## 🚀 Web Version
 Access the planner from anywhere:
