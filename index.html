@@ -77,7 +77,18 @@
             backdrop-filter: blur(4px);
         }
         #options-panel {
-            transition: transform 0.25s ease, opacity 0.25s ease;
+            transition: opacity 0.2s ease;
+        }
+        /* ---- Mobile Responsive ---- */
+        @media (max-width: 640px) {
+            #clock { font-size: 2.5rem !important; }
+            header { padding-top: 1.5rem !important; padding-bottom: 1rem !important; }
+            main { padding-left: 1rem !important; padding-right: 1rem !important; }
+            .glass-card { padding: 1rem !important; }
+            #nav-filters { gap: 1rem; }
+            #nav-filters button { padding: 0.25rem 0.5rem; font-size: 0.75rem; }
+            .flex.flex-wrap.gap-3 button { font-size: 0.7rem; padding: 0.4rem 0.75rem; }
+            #options-panel { width: calc(100vw - 2rem) !important; right: 1rem !important; left: auto !important; }
         }
     </style>
     <!-- Firebase compat SDKs -->
@@ -125,8 +136,8 @@
 
     <!-- Options panel -->
     <div id="options-panel"
-        class="hidden fixed top-[42px] right-4 z-[9998] w-72 rounded-2xl shadow-2xl border border-[var(--border-color)] overflow-hidden"
-        style="background: var(--surface);">
+        class="hidden fixed right-4 z-[9998] w-72 rounded-2xl shadow-2xl border border-[var(--border-color)] overflow-hidden"
+        style="background: var(--surface); top: 42px;">
         <div class="p-5">
             <h3 class="font-display font-bold text-base text-[var(--text-main)] mb-1">Account</h3>
             <p class="text-xs text-[var(--text-muted)] mb-4">Sign in to sync your planner across all devices.</p>
@@ -499,11 +510,14 @@
             // Web mode: hide title bar, remove top padding
             document.getElementById('title-bar').style.display = 'none';
             document.getElementById('body').classList.remove('pt-8');
-            // Make options button float fixed in top-right for web
+            // Make options button float fixed in top-right for web/mobile
             const btn = document.getElementById('options-btn');
             if (btn) {
-                btn.style.cssText = 'position:fixed; top:12px; right:14px; z-index:9999; width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:var(--surface); border:1px solid var(--border-color); color:var(--text-muted); cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.12); transition:background 0.15s;';
+                btn.style.cssText = 'position:fixed; top:12px; right:14px; z-index:9999; width:42px; height:42px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:var(--surface); border:1px solid var(--border-color); color:var(--text-muted); cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.12); transition:background 0.15s;';
             }
+            // Reposition options panel below the floating button
+            const panel = document.getElementById('options-panel');
+            if (panel) panel.style.top = '64px';
         }
         // Expose renderAll globally for firebase-auth.js
         window.renderAll = renderAll;
