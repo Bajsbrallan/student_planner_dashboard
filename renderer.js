@@ -33,14 +33,14 @@ function loadData() {
             if (raw) {
                 window.db = { ...defaultData, ...JSON.parse(raw) };
             } else {
-                saveData();
+                window.saveData();
             }
         } else {
             if (fs.existsSync(dataPath)) {
                 const raw = fs.readFileSync(dataPath, 'utf8');
                 window.db = { ...defaultData, ...JSON.parse(raw) };
             } else {
-                saveData();
+                window.saveData();
             }
         }
     } catch (e) {
@@ -52,7 +52,7 @@ function loadData() {
     if (window.db.lastHabitReset !== today) {
         window.db.habits.forEach(h => h.current = 0);
         window.db.lastHabitReset = today;
-        saveData();
+        window.saveData();
     }
 }
 
@@ -101,7 +101,7 @@ function executeDelete(type, id) {
     if (type === 'task') window.db.tasks = window.db.tasks.filter(i => i.id !== id);
     if (type === 'note') window.db.notes = window.db.notes.filter(i => i.id !== id);
 
-    saveData();
+    window.saveData();
     renderAll();
 }
 
@@ -146,7 +146,7 @@ document.getElementById('form-course').addEventListener('submit', (e) => {
         start: document.getElementById('c-start').value,
         end: document.getElementById('c-end').value
     });
-    saveData();
+    window.saveData();
     e.target.reset();
     closeModal('course-modal');
     renderAll();
@@ -162,7 +162,7 @@ document.getElementById('form-assignment').addEventListener('submit', (e) => {
         priority: document.getElementById('a-priority').value,
         completed: false
     });
-    saveData();
+    window.saveData();
     e.target.reset();
     closeModal('assignment-modal');
     renderAll();
@@ -178,7 +178,7 @@ document.getElementById('form-exam').addEventListener('submit', (e) => {
         time: document.getElementById('e-time').value,
         completed: false
     });
-    saveData();
+    window.saveData();
     e.target.reset();
     closeModal('exam-modal');
     renderAll();
@@ -193,7 +193,7 @@ document.getElementById('form-habit').addEventListener('submit', (e) => {
         measure: document.getElementById('h-measure').value,
         current: 0
     });
-    saveData();
+    window.saveData();
     e.target.reset();
     closeModal('habit-modal');
     renderAll();
@@ -206,7 +206,7 @@ document.getElementById('form-task').addEventListener('submit', (e) => {
         title: document.getElementById('t-title').value,
         completed: false
     });
-    saveData();
+    window.saveData();
     e.target.reset();
     closeModal('task-modal');
     renderAll();
@@ -218,7 +218,7 @@ document.getElementById('form-note').addEventListener('submit', (e) => {
         id: Date.now(),
         text: document.getElementById('n-text').value
     });
-    saveData();
+    window.saveData();
     e.target.reset();
     closeModal('note-modal');
     renderAll();
@@ -399,7 +399,7 @@ window.toggleCompleted = function (type, id, checked) {
         const item = window.db.tasks.find(i => i.id === id);
         if (item) item.completed = checked;
     }
-    saveData();
+    window.saveData();
     renderAll();
 }
 
@@ -420,7 +420,7 @@ function renderHabits() {
         div.onclick = (e) => {
             if (e.target.innerText === 'cancel') return; // ignore if delete button clicked
             habit.current += 1;
-            saveData();
+            window.saveData();
             renderHabits();
         };
 
@@ -561,5 +561,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 });
+
 
 
