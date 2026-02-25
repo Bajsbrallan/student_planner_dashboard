@@ -1,7 +1,11 @@
-const fs = require('fs');
-const path = require('path');
+const isWeb = typeof require === 'undefined';
+let fs, path, dataPath;
 
-const dataPath = path.join(__dirname, 'db.json');
+if (!isWeb) {
+    fs = require('fs');
+    path = require('path');
+    dataPath = path.join(__dirname, 'db.json');
+}
 
 // Default initial user data
 const defaultData = {
@@ -24,11 +28,20 @@ let audioPlayer;
 
 function loadData() {
     try {
-        if (fs.existsSync(dataPath)) {
-            const raw = fs.readFileSync(dataPath, 'utf8');
-            db = { ...defaultData, ...JSON.parse(raw) };
+        if (isWeb) {
+            const raw = localStorage.getItem('student_planner_db');
+            if (raw) {
+                db = { ...defaultData, ...JSON.parse(raw) };
+            } else {
+                saveData();
+            }
         } else {
-            saveData();
+            if (fs.existsSync(dataPath)) {
+                const raw = fs.readFileSync(dataPath, 'utf8');
+                db = { ...defaultData, ...JSON.parse(raw) };
+            } else {
+                saveData();
+            }
         }
     } catch (e) {
         console.error("Failed to load data", e);
@@ -45,7 +58,11 @@ function loadData() {
 
 function saveData() {
     try {
-        fs.writeFileSync(dataPath, JSON.stringify(db, null, 2));
+        if (isWeb) {
+            localStorage.setItem('student_planner_db', JSON.stringify(db));
+        } else {
+            fs.writeFileSync(dataPath, JSON.stringify(db, null, 2));
+        }
     } catch (e) {
         console.error("Failed to save data", e);
     }
@@ -534,5 +551,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     renderAll();
+
+    if (!isWeb) {
+        const { ipcRenderer } = require('electron');
+        document.getElementById('win-min-btn')?.addEventListener('click', () => ipcRenderer.send('window-min'));
+        document.getElementById('win-max-btn')?.addEventListener('click', () => ipcRenderer.send('window-max'));
+        document.getElementById('win-close-btn')?.addEventListener('click', () => ipcRenderer.send('window-close'));
+    }
 
 });
