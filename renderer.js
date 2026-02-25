@@ -4,7 +4,7 @@ let fs, path, dataPath;
 if (!isWeb) {
     fs = require('fs');
     path = require('path');
-    dataPath = path.join(__dirname, 'db.json');
+    dataPath = path.join(__dirname, 'window.db.json');
 }
 
 // Default initial user data
@@ -19,7 +19,7 @@ const defaultData = {
     lastHabitReset: new Date().toLocaleDateString()
 };
 
-let db = { ...defaultData };
+window.db = { ...defaultData };
 let currentView = 'Week'; // Day, Week, Month, Year
 
 // Media Player State
@@ -31,14 +31,14 @@ function loadData() {
         if (isWeb) {
             const raw = localStorage.getItem('student_planner_db');
             if (raw) {
-                db = { ...defaultData, ...JSON.parse(raw) };
+                window.db = { ...defaultData, ...JSON.parse(raw) };
             } else {
                 saveData();
             }
         } else {
             if (fs.existsSync(dataPath)) {
                 const raw = fs.readFileSync(dataPath, 'utf8');
-                db = { ...defaultData, ...JSON.parse(raw) };
+                window.db = { ...defaultData, ...JSON.parse(raw) };
             } else {
                 saveData();
             }
@@ -49,9 +49,9 @@ function loadData() {
 
     // Reset daily habits if it's a new day
     const today = new Date().toLocaleDateString();
-    if (db.lastHabitReset !== today) {
-        db.habits.forEach(h => h.current = 0);
-        db.lastHabitReset = today;
+    if (window.db.lastHabitReset !== today) {
+        window.db.habits.forEach(h => h.current = 0);
+        window.db.lastHabitReset = today;
         saveData();
     }
 }
@@ -59,14 +59,15 @@ function loadData() {
 function saveData() {
     try {
         if (isWeb) {
-            localStorage.setItem('student_planner_db', JSON.stringify(db));
+            localStorage.setItem('student_planner_db', JSON.stringify(window.db));
         } else {
-            fs.writeFileSync(dataPath, JSON.stringify(db, null, 2));
+            fs.writeFileSync(dataPath, JSON.stringify(window.db, null, 2));
         }
     } catch (e) {
         console.error("Failed to save data", e);
     }
 }
+window.saveData = saveData;
 
 // ----------------- UI UPDATES -----------------
 
@@ -93,12 +94,12 @@ function requestDelete(type, id, skipConfirm = false) {
 }
 
 function executeDelete(type, id) {
-    if (type === 'course') db.courses = db.courses.filter(i => i.id !== id);
-    if (type === 'assignment') db.assignments = db.assignments.filter(i => i.id !== id);
-    if (type === 'exam') db.exams = db.exams.filter(i => i.id !== id);
-    if (type === 'habit') db.habits = db.habits.filter(i => i.id !== id);
-    if (type === 'task') db.tasks = db.tasks.filter(i => i.id !== id);
-    if (type === 'note') db.notes = db.notes.filter(i => i.id !== id);
+    if (type === 'course') window.db.courses = window.db.courses.filter(i => i.id !== id);
+    if (type === 'assignment') window.db.assignments = window.db.assignments.filter(i => i.id !== id);
+    if (type === 'exam') window.db.exams = window.db.exams.filter(i => i.id !== id);
+    if (type === 'habit') window.db.habits = window.db.habits.filter(i => i.id !== id);
+    if (type === 'task') window.db.tasks = window.db.tasks.filter(i => i.id !== id);
+    if (type === 'note') window.db.notes = window.db.notes.filter(i => i.id !== id);
 
     saveData();
     renderAll();
@@ -124,7 +125,7 @@ window.openModal = function (id) {
         const selects = document.querySelectorAll('#a-course, #e-course');
         selects.forEach(select => {
             select.innerHTML = '<option value="">-- None --</option>';
-            db.courses.forEach(c => {
+            window.db.courses.forEach(c => {
                 select.innerHTML += `<option value="${c.title}">${c.title}</option>`;
             });
         });
@@ -137,7 +138,7 @@ window.closeModal = function (id) {
 document.getElementById('form-course').addEventListener('submit', (e) => {
     e.preventDefault();
     const days = Array.from(document.querySelectorAll('input[name="c-days"]:checked')).map(cb => cb.value);
-    db.courses.push({
+    window.db.courses.push({
         id: Date.now(),
         title: document.getElementById('c-title').value,
         teacher: document.getElementById('c-teacher').value,
@@ -153,7 +154,7 @@ document.getElementById('form-course').addEventListener('submit', (e) => {
 
 document.getElementById('form-assignment').addEventListener('submit', (e) => {
     e.preventDefault();
-    db.assignments.push({
+    window.db.assignments.push({
         id: Date.now(),
         title: document.getElementById('a-title').value,
         course: document.getElementById('a-course').value,
@@ -169,7 +170,7 @@ document.getElementById('form-assignment').addEventListener('submit', (e) => {
 
 document.getElementById('form-exam').addEventListener('submit', (e) => {
     e.preventDefault();
-    db.exams.push({
+    window.db.exams.push({
         id: Date.now(),
         title: document.getElementById('e-title').value,
         course: document.getElementById('e-course').value,
@@ -185,7 +186,7 @@ document.getElementById('form-exam').addEventListener('submit', (e) => {
 
 document.getElementById('form-habit').addEventListener('submit', (e) => {
     e.preventDefault();
-    db.habits.push({
+    window.db.habits.push({
         id: Date.now(),
         title: document.getElementById('h-title').value,
         target: parseInt(document.getElementById('h-target').value),
@@ -200,7 +201,7 @@ document.getElementById('form-habit').addEventListener('submit', (e) => {
 
 document.getElementById('form-task').addEventListener('submit', (e) => {
     e.preventDefault();
-    db.tasks.push({
+    window.db.tasks.push({
         id: Date.now(),
         title: document.getElementById('t-title').value,
         completed: false
@@ -213,7 +214,7 @@ document.getElementById('form-task').addEventListener('submit', (e) => {
 
 document.getElementById('form-note').addEventListener('submit', (e) => {
     e.preventDefault();
-    db.notes.push({
+    window.db.notes.push({
         id: Date.now(),
         text: document.getElementById('n-text').value
     });
@@ -240,7 +241,7 @@ function renderSchedule() {
     container.innerHTML = '';
 
     // Sort items by time/date
-    const getSortedCourses = () => [...db.courses].sort((a, b) => a.start.localeCompare(b.start));
+    const getSortedCourses = () => [...window.db.courses].sort((a, b) => a.start.localeCompare(b.start));
 
     if (currentView === 'Day') {
         titleEl.innerHTML = '<span class="material-symbols-outlined text-[var(--sunset-purple)]">today</span> Today\'s Schedule';
@@ -306,7 +307,7 @@ function renderSchedule() {
         container.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 transition-all duration-300";
 
         // Month/Year view combines assignments and exams
-        const upcoming = [...db.assignments.map(a => ({ ...a, type: 'assignment' })), ...db.exams.map(e => ({ ...e, type: 'exam' }))]
+        const upcoming = [...window.db.assignments.map(a => ({ ...a, type: 'assignment' })), ...window.db.exams.map(e => ({ ...e, type: 'exam' }))]
             .sort((a, b) => new Date(a.dueDate || a.date) - new Date(b.dueDate || b.date));
 
         let html = '';
@@ -344,7 +345,7 @@ function renderAssignments() {
     list.innerHTML = '';
 
     // Combine arrays for the Upcoming widget
-    const upcoming = [...db.assignments.map(a => ({ ...a, type: 'assignment' })), ...db.exams.map(e => ({ ...e, type: 'exam' }))]
+    const upcoming = [...window.db.assignments.map(a => ({ ...a, type: 'assignment' })), ...window.db.exams.map(e => ({ ...e, type: 'exam' }))]
         .sort((a, b) => new Date(a.dueDate || a.date) - new Date(b.dueDate || b.date))
         .slice(0, 5); // show max 5
 
@@ -389,13 +390,13 @@ function renderAssignments() {
 
 window.toggleCompleted = function (type, id, checked) {
     if (type === 'assignment') {
-        const item = db.assignments.find(i => i.id === id);
+        const item = window.db.assignments.find(i => i.id === id);
         if (item) item.completed = checked;
     } else if (type === 'exam') {
-        const item = db.exams.find(i => i.id === id);
+        const item = window.db.exams.find(i => i.id === id);
         if (item) item.completed = checked;
     } else if (type === 'task') {
-        const item = db.tasks.find(i => i.id === id);
+        const item = window.db.tasks.find(i => i.id === id);
         if (item) item.completed = checked;
     }
     saveData();
@@ -406,12 +407,12 @@ function renderHabits() {
     const list = document.getElementById('habits-list');
     list.innerHTML = '';
 
-    if (db.habits.length === 0) {
+    if (window.db.habits.length === 0) {
         list.innerHTML = '<p class="text-xs text-[var(--text-muted)] italic">No daily habits. Add one!</p>';
         return;
     }
 
-    db.habits.forEach(habit => {
+    window.db.habits.forEach(habit => {
         const progress = Math.min((habit.current / habit.target) * 100, 100);
         const div = document.createElement('div');
         div.className = "group relative cursor-pointer";
@@ -440,7 +441,7 @@ function renderHabits() {
 function renderTasks() {
     const list = document.getElementById('tasks-list');
     list.innerHTML = '';
-    db.tasks.forEach(task => {
+    window.db.tasks.forEach(task => {
         const li = document.createElement('li');
         li.className = "flex items-center gap-3 group relative";
 
@@ -458,7 +459,7 @@ function renderTasks() {
 function renderNotes() {
     const list = document.getElementById('notes-list');
     list.innerHTML = '';
-    db.notes.forEach(note => {
+    window.db.notes.forEach(note => {
         const div = document.createElement('div');
         div.className = "relative p-3 bg-[var(--surface)] text-[var(--text-main)] rounded-xl text-xs leading-relaxed shadow-sm border border-[var(--border-color)] group hover:shadow-md transition-shadow group";
 
@@ -475,7 +476,7 @@ function updateFocusCourse(now) {
     if (!container) return;
 
     const todayDay = now.toLocaleDateString('en-US', { weekday: 'long' });
-    const todayCourses = db.courses.filter(c => c.days.includes(todayDay));
+    const todayCourses = window.db.courses.filter(c => c.days.includes(todayDay));
 
     // Find next course today
     const currentMins = now.getHours() * 60 + now.getMinutes();
@@ -506,7 +507,7 @@ function updateFocusCourse(now) {
         const tomorrow = new Date(now);
         tomorrow.setDate(now.getDate() + 1);
         const tomorrowDay = tomorrow.toLocaleDateString('en-US', { weekday: 'long' });
-        const tomCourses = db.courses.filter(c => c.days.includes(tomorrowDay)).sort((a, b) => a.start.localeCompare(b.start));
+        const tomCourses = window.db.courses.filter(c => c.days.includes(tomorrowDay)).sort((a, b) => a.start.localeCompare(b.start));
         if (tomCourses.length > 0) {
             focus = tomCourses[0];
             subtitle = `Tomorrow at ${focus.start}`;
@@ -560,3 +561,5 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 });
+
+
