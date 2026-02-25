@@ -1,0 +1,23 @@
+{
+    "name": "student-planner-dashboard",
+    "version": "1.0.0",
+    "description": "Student Planner Dashboard PC App",
+    "main": "main.js",
+    "scripts": {
+        "start": "electron .",
+        "build": "electron-builder -w"
+    },
+    "build": {
+        "appId": "com.studentplanner.dashboard",
+        "productName": "Student Planner Dashboard",
+        "win": {
+            "target": "nsis"
+        }
+    },
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+        "electron": "^40.6.0",
+        "electron-builder": "^26.8.1"
+    }
+}

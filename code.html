@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Clean Grid Planner - V2</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&amp;family=Quicksand:wght@400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <style type="text/tailwindcss">
+        :root {
+            --sunset-purple: #9B86A8;
+            --sunset-pink: #D6A6B4;
+            --sunset-orange: #E6B098;
+            --sunset-lavender: #A8A6D6;
+            --bg-base: #F8F7F9;
+            --surface: #FFFFFF;
+            --text-main: #4A444D;
+            --text-muted: #8E8894;
+            --border-color: #D1D5DB;
+            --input-bg: #FFFFFF;
+            --hover-bg: #F3F4F6;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            font-family: 'Nunito', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .font-display {
+            font-family: 'Quicksand', sans-serif;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+        }
+        .nav-active {
+            color: var(--text-main);
+            border-bottom: 2px solid var(--sunset-purple);
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-base: #121212;
+                --surface: #1E1E1E;
+                --text-main: #E0E0E0;
+                --text-muted: #A0A0A0;
+                --border-color: #4B5563;
+                --input-bg: #374151;
+                --hover-bg: #1F2937;
+            }
+            .glass-card, .bg-white, .bg-gray-100 {
+                background: rgba(30, 30, 30, 0.8) !important;
+                border-color: rgba(255, 255, 255, 0.1) !important;
+                color: var(--text-main) !important;
+            }
+        }
+        
+        ::-webkit-scrollbar { display: none; }
+
+        .modal-overlay {
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+        }
+    </style>
+</head>
+
+<body id="body" class="min-h-screen pb-12 relative overflow-x-hidden pt-8">
+    <div
+        style="-webkit-app-region: drag; height: 32px; width: 100%; position: fixed; top: 0; left: 0; display: flex; justify-content: space-between; align-items: center; z-index: 99999; background: var(--bg-base);">
+        <div class="font-display"
+            style="font-size: 12px; font-weight: 700; margin-left: 12px; color: var(--text-muted); opacity: 0.8; letter-spacing: 0.5px;">
+            Student Planner</div>
+        <div style="-webkit-app-region: no-drag; display: flex; height: 100%;">
+            <button onclick="require('electron').ipcRenderer.send('window-min')"
+                style="width: 44px; height: 100%; display: flex; justify-content: center; align-items: center; cursor: pointer; color: var(--text-muted); transition: background-color 0.15s; background: transparent; border: none;"
+                onmouseover="this.style.backgroundColor='var(--hover-bg)'; this.style.color='var(--text-main)'"
+                onmouseout="this.style.backgroundColor='transparent'; this.style.color='var(--text-muted)'">
+                <span class="material-symbols-outlined" style="font-size: 16px;">minimize</span>
+            </button>
+            <button onclick="require('electron').ipcRenderer.send('window-max')"
+                style="width: 44px; height: 100%; display: flex; justify-content: center; align-items: center; cursor: pointer; color: var(--text-muted); transition: background-color 0.15s; background: transparent; border: none;"
+                onmouseover="this.style.backgroundColor='var(--hover-bg)'; this.style.color='var(--text-main)'"
+                onmouseout="this.style.backgroundColor='transparent'; this.style.color='var(--text-muted)'">
+                <span class="material-symbols-outlined" style="font-size: 14px;">crop_square</span>
+            </button>
+            <button onclick="require('electron').ipcRenderer.send('window-close')"
+                style="width: 44px; height: 100%; display: flex; justify-content: center; align-items: center; cursor: pointer; color: var(--text-muted); transition: background-color 0.15s, color 0.15s; background: transparent; border: none;"
+                onmouseover="this.style.backgroundColor='#e81123'; this.style.color='white'"
+                onmouseout="this.style.backgroundColor='transparent'; this.style.color='var(--text-muted)'">
+                <span class="material-symbols-outlined" style="font-size: 16px;">close</span>
+            </button>
+        </div>
+    </div>
+
+    <header class="pt-8 pb-8 flex flex-col items-center justify-center space-y-4">
+        <div class="text-center">
+            <h1 class="text-5xl font-display font-bold tracking-tight text-[var(--text-main)]" id="clock">--:--</h1>
+            <p class="text-[var(--text-muted)] font-medium mt-1" id="date">Loading date...</p>
+        </div>
+        <nav class="flex items-center space-x-8 pt-4 border-b border-gray-200" id="nav-filters">
+            <button data-view="Day"
+                class="px-2 py-1 text-sm font-semibold text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors">Day</button>
+            <button data-view="Week" class="px-2 py-1 text-sm font-semibold nav-active">Week</button>
+            <button data-view="Month"
+                class="px-2 py-1 text-sm font-semibold text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors">Month</button>
+            <button data-view="Year"
+                class="px-2 py-1 text-sm font-semibold text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors">Year</button>
+        </nav>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-6">
+        <!-- Main Actions -->
+        <div class="flex flex-wrap gap-3 mb-8 justify-center">
+            <button onclick="openModal('course-modal')"
+                class="flex items-center gap-2 px-4 py-2 bg-[var(--sunset-purple)] bg-opacity-10 text-[var(--text-main)] rounded-lg border border-[var(--sunset-purple)] border-opacity-20 hover:bg-opacity-20 transition-all text-sm font-semibold">
+                <span class="material-symbols-outlined text-lg">add_circle</span> Add Course
+            </button>
+            <button onclick="openModal('assignment-modal')"
+                class="flex items-center gap-2 px-4 py-2 bg-[var(--sunset-pink)] bg-opacity-10 text-[var(--text-main)] rounded-lg border border-[var(--sunset-pink)] border-opacity-20 hover:bg-opacity-20 transition-all text-sm font-semibold">
+                <span class="material-symbols-outlined text-lg">add_task</span> Add Assignment
+            </button>
+            <button onclick="openModal('exam-modal')"
+                class="flex items-center gap-2 px-4 py-2 bg-[var(--sunset-orange)] bg-opacity-10 text-[var(--text-main)] rounded-lg border border-[var(--sunset-orange)] border-opacity-20 hover:bg-opacity-20 transition-all text-sm font-semibold">
+                <span class="material-symbols-outlined text-lg">event</span> Add Exam
+            </button>
+            <button onclick="openModal('habit-modal')"
+                class="flex items-center gap-2 px-4 py-2 bg-[var(--sunset-lavender)] bg-opacity-10 text-[var(--text-main)] rounded-lg border border-[var(--sunset-lavender)] border-opacity-20 hover:bg-opacity-20 transition-all text-sm font-semibold">
+                <span class="material-symbols-outlined text-lg">bolt</span> Add Daily Habits
+            </button>
+        </div>
+
+        <div class="grid grid-cols-12 gap-6">
+            <!-- Schedule / Calendar Area -->
+            <div class="col-span-12">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="font-display text-xl font-bold flex items-center gap-2" id="schedule-title">
+                        <span class="material-symbols-outlined text-[var(--sunset-purple)]">calendar_view_week</span>
+                        Weekly Schedule
+                    </h2>
+                </div>
+                <!-- Dynamic grid based on view -->
+                <div id="schedule-container" class="grid grid-cols-1 md:grid-cols-7 gap-3 transition-all duration-300">
+                    <!-- Cards will be populated here -->
+                </div>
+            </div>
+
+            <!-- Left column contents -->
+            <div class="col-span-12 lg:col-span-8 space-y-6 mt-2">
+                <!-- Assignments -->
+                <section class="glass-card rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="font-display text-xl font-bold flex items-center gap-2">
+                            <span class="material-symbols-outlined text-[var(--sunset-pink)]">assignment_late</span>
+                            Upcoming Assignments & Exams
+                        </h2>
+                    </div>
+                    <div class="space-y-3" id="assignments-list">
+                        <!-- Populated by JS -->
+                    </div>
+                </section>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Habits -->
+                    <div class="glass-card p-6 rounded-2xl">
+                        <h3 class="font-display font-bold text-lg mb-4 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-[var(--sunset-orange)]">bolt</span> Daily Habits
+                        </h3>
+                        <div class="space-y-4" id="habits-list">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Focus Course -->
+                    <div class="glass-card p-6 rounded-2xl relative overflow-hidden">
+                        <h3 class="font-display font-bold text-lg mb-4 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-[var(--sunset-lavender)]">auto_stories</span>
+                            Focus Course
+                        </h3>
+                        <div id="focus-course-container" class="flex items-center gap-4">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div class="col-span-12 lg:col-span-4 space-y-6 mt-2">
+                <!-- Tasks -->
+                <section class="glass-card p-6 rounded-2xl">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-display font-bold text-lg flex items-center gap-2">
+                            <span class="material-symbols-outlined text-[var(--sunset-orange)]">checklist</span>
+                            Today's Tasks
+                        </h3>
+                    </div>
+                    <ul class="space-y-3" id="tasks-list">
+                        <!-- Populated by JS -->
+                    </ul>
+                    <button onclick="openModal('task-modal')"
+                        class="w-full mt-4 py-2 text-xs font-bold text-[var(--sunset-orange)] hover:bg-[var(--sunset-orange)] hover:bg-opacity-5 rounded-lg transition-all border border-transparent hover:border-[var(--sunset-orange)] border-opacity-20 flex items-center justify-center gap-1">
+                        <span class="material-symbols-outlined text-sm">add</span> Add Task
+                    </button>
+                </section>
+
+                <!-- Notes -->
+                <section class="glass-card p-6 rounded-2xl bg-opacity-40">
+                    <h3 class="font-display font-bold text-lg mb-4 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[var(--sunset-lavender)]">sticky_note</span>
+                        Quick Notes
+                    </h3>
+                    <div class="space-y-4">
+                        <div id="notes-list" class="space-y-4"></div>
+                        <button onclick="openModal('note-modal')"
+                            class="w-full py-2 text-xs font-bold text-[var(--sunset-lavender)] hover:bg-[var(--sunset-lavender)] hover:bg-opacity-5 rounded-lg transition-all border border-transparent hover:border-[var(--sunset-lavender)] border-opacity-20 flex items-center justify-center gap-1">
+                            <span class="material-symbols-outlined text-sm">add</span> Add Note
+                        </button>
+                    </div>
+                </section>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- MODALS -->
+    <!-- Course Modal -->
+    <div id="course-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-overlay p-4">
+        <div class="bg-[var(--surface)] text-[var(--text-main)] rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
+            <span
+                class="material-symbols-outlined absolute top-4 right-4 cursor-pointer text-gray-400 hover:text-[var(--text-main)] transition-colors"
+                onclick="closeModal('course-modal')">close</span>
+            <h2 class="font-display font-bold text-xl mb-4 text-[var(--sunset-purple)]">Add New Course</h2>
+            <form id="form-course" class="space-y-4">
+                <div><label class="block text-xs font-bold mb-1 text-[var(--text-muted)]">Course Title</label><input
+                        required type="text" id="c-title"
+                        class="w-full text-sm rounded-lg border-[var(--border-color)] bg-[var(--input-bg)] p-2 text-[var(--text-main)]" />
+                </div>
+                <div><label class="block text-xs font-bold mb-1 text-[var(--text-muted)]">Teacher /
+                        Professor</label><input type="text" id="c-teacher"
+                        class="w-full text-sm rounded-lg border-[var(--border-color)] bg-[var(--input-bg)] p-2 text-[var(--text-main)]" />
+                </div>
+                <div>
+                    <label class="block text-xs font-bold mb-1 text-[var(--text-muted)]">Days of the Week</label>
+                    <div class="flex flex-wrap gap-2 text-xs">
+                        <label class="flex items-center gap-1"><input type="checkbox" name="c-days" value="Monday"
+                                class="rounded text-[var(--sunset-purple)]"> Mon</label>
+                        <label class="flex items-center gap-1"><input type="checkbox" name="c-days" value="Tuesday"
+                                class="rounded text-[var(--sunset-purple)]"> Tue</label>
+                        <label class="flex items-center gap-1"><input type="checkbox" name="c-days" value="Wednesday"
+                                class="rounded text-[var(--sunset-purple)]"> Wed</label>
+                        <label class="flex items-center gap-1"><input type="checkbox" name="c-days" value="Thursday"
+                                class="rounded text-[var(--sunset-purple)]"> Thu</label>
+                        <label class="flex items-center gap-1"><input type="checkbox" name="c-days" value="Friday"
+                                class="rounded text-[var(--sunset-purple)]"> Fri</label>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="block text-xs font-bold mb-1 text-[var(--text-muted)]">Start Time</label><input
+                            required type="time" id="c-start"
+                            class="w-full text-sm rounded-lg border-[var(--border-color)] bg-[var(--input-bg)] p-2 text-[var(--text-main)]" />
+                    </div>
+                    <div><label class="block text-xs font-bold mb-1 text-[var(--text-muted)]">End Time</label><input
+                            required type="time" id="c-end"
+                            class="w-full text-sm rounded-lg border-[var(--border-color)] bg-[var(--input-bg)] p-2 text-[var(--text-main)]" />
+                    </div>
+                </div>
+                <button type="submit"
+                    class="w-full mt-4 bg-[var(--sunset-purple)] text-white py-2 rounded-lg font-bold text-sm hover:opacity-90 transition-opacity">Save
+                    Course</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Assignment Modal -->
+    <div id="assignment-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-overlay p-4">
+        <div class="bg-[var(--surface)] text-[var(--text-main)] rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
+            <span
+                class="material-symbols-outlined absolute top-4 right-4 cursor-pointer text-gray-400 hover:text-[var(--text-main)] transition-colors"
+                onclick="closeModal('assignment-modal')">close</span>
+            <h2 class="font-display font-bold text-xl mb-4 text-[var(--sunset-pink)]">Add Assignment</h2>
+            <form id="form-assignment" class="space-y-4">
+                <div><label class="block text-xs font-bold mb-1 text-[var(--text-muted)]">Title</label><input required
+                        type="text" id="a-title"
+                        class="w-full text-sm rounded-lg border-[var(--border-color)] bg-[var(--input-bg)] p-2 text-[var(--text-main)]" />
+                </div>
+                <div><label class="block text-xs font-bold mb-1 text-[var(--text-muted)]">Associated Course
+                        (Optional)</label><select id="a-course"
+                        class="w-full text-sm rounded-lg border-[var(--border-color)] bg-[var(--input-bg)] p-2 text-[var(--text-main)]">
+                        <option value="">-- None --</option>
+                    </select></div>
+                <div><label class="block text-xs font-bold mb-1 text-[var(--text-muted)]">Due Date</label><input
+                        required type="date" id="a-date"
+                        class="w-full text-sm rounded-lg border-[var(--border-color)] bg-[var(--input-bg)] p-2 text-[var(--text-main)]" />
+                </div>
+                <div><label class="block text-xs font-bold mb-1 text-[var(--text-muted)]">Priority Level</label>
+                    <select id="a-priority"
+                        class="w-full text-sm rounded-lg border-[var(--border-color)] bg-[var(--input-bg)] p-2 text-[var(--text-main)]">
+                        <option value="In Progress">Normal (In Progress)</option>
+                        <option value="High Priority">High Priority</option>
+                    </select>
+                </div>
+                <button type="submit"
+                    class="w-full mt-4 bg-[var(--sunset-pink)] text-white py-2 rounded-lg font-bold text-sm hover:opacity-90 transition-opacity">Save
+                    Assignment</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Exam Modal -->
+    <div id="exam-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-overlay p-4">
+        <div class="bg-[var(--surface)] text-[var(--text-main)] rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
+            <span
+                class="material-symbols-outlined absolute top-4 right-4 cursor-pointer text-gray-400 hover:text-[var(--text-main)] transition-colors"
+                onclick="closeModal('exam-modal')">close</span>
+            <h2 class="font-display font-bold text-xl mb-4 text-[var(--sunset-orange)]">Add Exam</h2>
+            <form id="form-exam" class="space-y-4">
+                <div><label class="block text-xs font-bold mb-1 text-[var(--text-muted)]">Exam Subject /
+                        Title</label><input required type="text" id="e-title"
+                        class="w-full text-sm rounded-lg border-[var(--border-color)] bg-[var(--input-bg)] p-2 text-[var(--text-main)]" />
+                </div>
+                <div><label class="block text-xs font-bold mb-1 text-[var(--text-muted)]">Associated
+                        Course</label><select id="e-course"
+                        class="w-full text-sm rounded-lg border-[var(--border-color)] bg-[var(--input-bg)] p-2 text-[var(--text-main)]">
+                        <option value="">-- None --</option>
+                    </select></div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="block text-xs font-bold mb-1 text-[var(--text-muted)]">Date</label><input
+                            required type="date" id="e-date"
+                            class="w-full text-sm rounded-lg border-[var(--border-color)] bg-[var(--input-bg)] p-2 text-[var(--text-main)]" />
+                    </div>
+                    <div><label class="block text-xs font-bold mb-1 text-[var(--text-muted)]">Time</label><input
+                            type="time" id="e-time"
+                            class="w-full text-sm rounded-lg border-[var(--border-color)] bg-[var(--input-bg)] p-2 text-[var(--text-main)]" />
+                    </div>
+                </div>
+                <button type="submit"
+                    class="w-full mt-4 bg-[var(--sunset-orange)] text-white py-2 rounded-lg font-bold text-sm hover:opacity-90 transition-opacity">Save
+                    Exam</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Habit Modal -->
+    <div id="habit-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-overlay p-4">
+        <div class="bg-[var(--surface)] text-[var(--text-main)] rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
+            <span
+                class="material-symbols-outlined absolute top-4 right-4 cursor-pointer text-gray-400 hover:text-[var(--text-main)] transition-colors"
+                onclick="closeModal('habit-modal')">close</span>
+            <h2 class="font-display font-bold text-xl mb-4 text-[var(--sunset-lavender)]">Add Daily Habit</h2>
+            <form id="form-habit" class="space-y-4">
+                <div><label class="block text-xs font-bold mb-1 text-[var(--text-muted)]">Habit Name (e.g. Water Intake,
+                        Read)</label><input required type="text" id="h-title"
+                        class="w-full text-sm rounded-lg border-[var(--border-color)] bg-[var(--input-bg)] p-2 text-[var(--text-main)]" />
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="block text-xs font-bold mb-1 text-[var(--text-muted)]">Target Goal
+                            (Number)</label><input required type="number" min="1" id="h-target"
+                            class="w-full text-sm rounded-lg border-[var(--border-color)] bg-[var(--input-bg)] p-2 text-[var(--text-main)]" />
+                    </div>
+                    <div><label class="block text-xs font-bold mb-1 text-[var(--text-muted)]">Measurement (glasses,
+                            hours, pages)</label><input required type="text" id="h-measure"
+                            class="w-full text-sm rounded-lg border-[var(--border-color)] bg-[var(--input-bg)] p-2 text-[var(--text-main)]" />
+                    </div>
+                </div>
+                <button type="submit"
+                    class="w-full mt-4 bg-[var(--sunset-lavender)] text-white py-2 rounded-lg font-bold text-sm hover:opacity-90 transition-opacity">Save
+                    Habit</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Task Modal -->
+    <div id="task-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-overlay p-4">
+        <div class="bg-[var(--surface)] text-[var(--text-main)] rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
+            <span
+                class="material-symbols-outlined absolute top-4 right-4 cursor-pointer text-gray-400 hover:text-[var(--text-main)] transition-colors"
+                onclick="closeModal('task-modal')">close</span>
+            <h2 class="font-display font-bold text-xl mb-4 text-[var(--sunset-orange)]">Add Daily Task</h2>
+            <form id="form-task" class="space-y-4">
+                <div><label class="block text-xs font-bold mb-1 text-[var(--text-muted)]">Task Note</label><input
+                        required type="text" id="t-title"
+                        class="w-full text-sm rounded-lg border-[var(--border-color)] bg-[var(--input-bg)] p-2 text-[var(--text-main)]" />
+                </div>
+                <button type="submit"
+                    class="w-full mt-4 bg-[var(--sunset-orange)] text-white py-2 rounded-lg font-bold text-sm hover:opacity-90 transition-opacity">Save
+                    Task</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Note Modal -->
+    <div id="note-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-overlay p-4">
+        <div class="bg-[var(--surface)] text-[var(--text-main)] rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
+            <span
+                class="material-symbols-outlined absolute top-4 right-4 cursor-pointer text-gray-400 hover:text-[var(--text-main)] transition-colors"
+                onclick="closeModal('note-modal')">close</span>
+            <h2 class="font-display font-bold text-xl mb-4 text-[var(--sunset-lavender)]">Add Quick Note</h2>
+            <form id="form-note" class="space-y-4">
+                <div><label class="block text-xs font-bold mb-1 text-[var(--text-muted)]">Note Content</label><textarea
+                        required rows="4" id="n-text"
+                        class="w-full text-sm rounded-lg border-[var(--border-color)] bg-[var(--input-bg)] p-2 text-[var(--text-main)]"></textarea>
+                </div>
+                <button type="submit"
+                    class="w-full mt-4 bg-[var(--sunset-lavender)] text-white py-2 rounded-lg font-bold text-sm hover:opacity-90 transition-opacity">Save
+                    Note</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Confirm Dialog -->
+    <div id="confirm-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center modal-overlay p-4">
+        <div class="bg-[var(--surface)] text-[var(--text-main)] rounded-2xl w-full max-w-sm p-6 shadow-2xl text-center">
+            <h2 class="font-display font-bold text-lg mb-2 text-red-500">Are you sure?</h2>
+            <p class="text-sm text-[var(--text-muted)] mb-6">Do you really want to remove this item?</p>
+            <div class="flex gap-4">
+                <button id="confirm-no-btn"
+                    class="flex-1 py-2 rounded bg-[var(--hover-bg)] text-[var(--text-main)] font-bold text-sm">Cancel</button>
+                <button id="confirm-yes-btn"
+                    class="flex-1 py-2 rounded bg-red-500 text-white font-bold text-sm hover:bg-red-600 transition-colors">Yes,
+                    Remove</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="renderer.js"></script>
+</body>
+
+</html>
